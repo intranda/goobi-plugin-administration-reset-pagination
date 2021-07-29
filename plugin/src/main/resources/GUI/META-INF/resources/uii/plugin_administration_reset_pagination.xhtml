@@ -4,54 +4,189 @@
 	xmlns:h="http://xmlns.jcp.org/jsf/html"
 	xmlns:f="http://xmlns.jcp.org/jsf/core"
 	xmlns:x="http://myfaces.apache.org/tomahawk"
-    xmlns:o="http://omnifaces.org/ui"
+	xmlns:o="http://omnifaces.org/ui"
 	xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites"
 	xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
-	xmlns:p="http://primefaces.org/ui">
+	xmlns:p="http://primefaces.org/ui" xmlns:jsf="http://xmlns.jcp.org/jsf">
 
 	<composite:interface>
 	</composite:interface>
 
 	<composite:implementation>
 
-		<h:panelGroup>
-			<div class="row">
-				<div class="col-sm-12">
-					<div class="box box-color box-bordered lightgrey">
-						<div class="box-title">
-							<h3>
-								<i class="fa fa-plug"></i>
-								<h:outputText
-									value="#{msgs[AdministrationForm.administrationPlugin.title]}" />
-							</h3>
-						</div>
-						<div class="box-content">
+		<div class="row">
+			<div class="col-sm-12">
+				<div class="box box-color box-bordered orange">
+					<div class="box-title">
+						<h3>
+							<i class="fa fa-plug"></i>
+							<h:outputText
+								value="#{msgs[AdministrationForm.administrationPlugin.title]}" />
+						</h3>
+					</div>
+					<div class="box-content nopadding">
 
-							<h:panelGroup
-								rendered="#{!LoginForm.hasRole('Plugin_administration_reset_pagination')}">
-								<h:outputText
-									styleClass="alert alert-danger alert-dismissable margin-bottom-10 margin-top-10"
-									value="#{msgs.plugin_administration_missingPermission} Plugin_administration_reset_pagination"></h:outputText>
-							</h:panelGroup>
+						<h:panelGroup
+							rendered="#{!LoginForm.hasRole('Plugin_administration_reset_pagination')}">
+							<h:outputText
+								styleClass="alert alert-danger alert-dismissable margin-bottom-10 margin-top-10"
+								value="#{msgs.plugin_administration_missingPermission} Plugin_administration_reset_pagination"></h:outputText>
+						</h:panelGroup>
 
-							<h:panelGroup id="actionform" styleClass="col-sm-12"
-								rendered="#{LoginForm.hasRole('Plugin_administration_reset_pagination')}">
-								<div class="row">
-									<h:form>
-										Counter value: #{AdministrationForm.administrationPlugin.counter}
-										
-										<h:commandLink value="reset pagination" action="#{AdministrationForm.administrationPlugin.resetPagination}"/>
-									</h:form>
-								</div>
-							</h:panelGroup>
+						<h:panelGroup id="actionform" styleClass="col-sm-12"
+							rendered="#{LoginForm.hasRole('Plugin_administration_reset_pagination')}">
+							<div class="row">
+								<h:form styleClass="form-horizontal form-bordered">
 
-						</div>
+									<!-- Filter -->
+									<intranda:formInputText id="filter" name="filtername"
+										label="#{msgs.filter}"
+										field="#{AdministrationForm.administrationPlugin.filter}"
+										help="#{msgs.helpFilter}" fieldStyle="form-control"
+										required="false" />
+
+									<!-- Generate the statistics or cancel again -->
+									<div class="form-actions">
+										<h:commandButton
+											styleClass="btn btn-primary submitOnEnter pull-right font-size-s margin-bottom-most"
+											id="myStatisticButton" type="submit"
+											title="#{msgs.resetPagination}"
+											action="#{AdministrationForm.administrationPlugin.resetPagination}"
+											value="#{msgs.resetPagination}">
+										</h:commandButton>
+									</div>
+								</h:form>
+							</div>
+						</h:panelGroup>
+
 					</div>
 				</div>
 			</div>
+		</div>
+
+		<h:panelGroup id="resultArea">
+			<h:panelGroup
+				rendered="#{AdministrationForm.administrationPlugin.finishedProcesses != null and AdministrationForm.administrationPlugin.finishedProcesses.size() gt 0}">
+				<div class="row">
+					<div class="col-sm-12">
+						<div class="box box-color lightgrey box-bordered">
+							<div class="box-title">
+								<h3>
+									<i class="fa fa-pie-chart"></i>
+									<h:outputText
+										value="#{msgs[AdministrationForm.administrationPlugin.title]}" />
+								</h3>
+							</div>
+							<div class="box-content nopadding">
+
+								<!-- ###################### result table ###################### -->
+
+								<div class="dataTables_wrapper">
+
+									<div class="dataTables_length"
+										style="width: 100%; margin-bottom: 10px;">
+										<h:outputText
+											value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.finishedProcesses.size()}" />
+										<h:outputText
+											value=" - #{msgs.goobiScript_showMax}: #{SessionForm.gsm.showMax}"
+											styleClass="font-light margin-left-10"
+											rendered="#{AdministrationForm.administrationPlugin.finishedProcesses.size() gt SessionForm.gsm.showMax}" />
+
+										<div class="btn-group font-size-s pull-right margin-right-10"
+											data-toggle="tooltip" title="#{msgs.goobiScript_limitList}"
+											style="margin-right: 20px;">
+											<button class="btn font-size-s dropdown-toggle"
+												data-toggle="dropdown" tabindex="0">
+												<i class="fa fa-table margin-right-5" /> <span
+													class="caret"></span>
+											</button>
+
+											<ul class="dropdown-menu">
+												<li>
+													<button class="dropdown-item"
+														jsf:action="#{NavigationForm.Reload}"
+														jsf:id="limitResults10">
+														<h:outputText value="#{msgs.goobiScript_setMaxEntries} 10" />
+														<x:updateActionListener
+															property="#{SessionForm.gsm.showMax}" value="10" />
+													</button>
+												</li>
+												<li>
+													<button class="dropdown-item"
+														jsf:action="#{NavigationForm.Reload}"
+														jsf:id="limitResults100">
+														<h:outputText
+															value="#{msgs.goobiScript_setMaxEntries} 100" />
+														<x:updateActionListener
+															property="#{SessionForm.gsm.showMax}" value="100" />
+													</button>
+												</li>
+												<li>
+													<button class="dropdown-item"
+														jsf:action="#{NavigationForm.Reload}"
+														jsf:id="limitResults1000">
+														<h:outputText
+															value="#{msgs.goobiScript_setMaxEntries} 1.000" />
+														<x:updateActionListener
+															property="#{SessionForm.gsm.showMax}" value="1000" />
+													</button>
+												</li>
+												<li>
+													<button class="dropdown-item"
+														jsf:action="#{NavigationForm.Reload}"
+														jsf:id="limitResults10000">
+														<h:outputText
+															value="#{msgs.goobiScript_setMaxEntries} 10.000" />
+														<x:updateActionListener
+															property="#{SessionForm.gsm.showMax}" value="10000" />
+													</button>
+												</li>
+												<li>
+													<button class="dropdown-item"
+														jsf:action="#{NavigationForm.Reload}"
+														jsf:id="limitResults1000000">
+														<h:outputText
+															value="#{msgs.goobiScript_setMaxEntries} 1.000.000" />
+														<x:updateActionListener
+															property="#{SessionForm.gsm.showMax}" value="1000000" />
+													</button>
+												</li>
+											</ul>
+
+										</div>
+
+									</div>
+
+									<!-- Datentabelle -->
+									<x:dataTable id="results"
+										styleClass="table table-hover table-nomargin dataTable table-bordered responsive"
+										var="item"
+										value="#{AdministrationForm.administrationPlugin.finishedProcesses}">
+
+										<h:column>
+											<f:facet name="header">
+												<h:outputText value="#{msgs.title}" />
+											</f:facet>
+											<h:outputText value="#{item.titel}" />
+										</h:column>
+
+									</x:dataTable>
+
+								</div>
+
+								<!-- ###################### // result table ###################### -->
+
+							</div>
+						</div>
+					</div>
+				</div>
+
+			</h:panelGroup>
 		</h:panelGroup>
-    <o:socket channel="adminPluginPush" scope="session">
-        <f:ajax event="update" render="actionform"/>
-    </o:socket>
+
+		<o:socket channel="adminPluginPush" scope="session">
+			<f:ajax event="update" render="resultArea" />
+		</o:socket>
+		
 	</composite:implementation>
 </ui:composition>
