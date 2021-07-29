@@ -57,10 +57,10 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
                     if (pusher != null && i % 3 == 0) {
                         pusher.send("update");
                     }
-                    Thread.sleep(100);
-                    if (pusher != null) {
-                        pusher.send("update");
-                    }
+                }
+                Thread.sleep(100);
+                if (pusher != null) {
+                    pusher.send("update");
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
