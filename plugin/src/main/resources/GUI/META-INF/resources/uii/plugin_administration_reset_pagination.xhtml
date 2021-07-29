@@ -52,7 +52,7 @@
 											id="myStatisticButton" type="submit"
 											title="#{msgs.resetPagination}"
 											action="#{AdministrationForm.administrationPlugin.resetPagination}"
-											value="#{msgs.resetPagination}">
+											value="#{msgs.executePlugin}">
 										</h:commandButton>
 									</div>
 								</h:form>
@@ -66,7 +66,7 @@
 
 		<h:panelGroup id="resultArea">
 			<h:panelGroup
-				rendered="#{AdministrationForm.administrationPlugin.finishedProcesses != null and AdministrationForm.administrationPlugin.finishedProcesses.size() gt 0}">
+				rendered="#{AdministrationForm.administrationPlugin.resultTotal gt 0}">
 				<div class="row">
 					<div class="col-sm-12">
 						<div class="box box-color lightgrey box-bordered">
@@ -86,11 +86,11 @@
 									<div class="dataTables_length"
 										style="width: 100%; margin-bottom: 10px;">
 										<h:outputText
-											value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.finishedProcesses.size()}" />
+											value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.resultProcessed} / #{AdministrationForm.administrationPlugin.resultTotal}" />
 										<h:outputText
 											value=" - #{msgs.goobiScript_showMax}: #{SessionForm.gsm.showMax}"
 											styleClass="font-light margin-left-10"
-											rendered="#{AdministrationForm.administrationPlugin.finishedProcesses.size() gt SessionForm.gsm.showMax}" />
+											rendered="#{AdministrationForm.administrationPlugin.resultProcessed gt SessionForm.gsm.showMax}" />
 
 										<div class="btn-group font-size-s pull-right margin-right-10"
 											data-toggle="tooltip" title="#{msgs.goobiScript_limitList}"
@@ -161,7 +161,7 @@
 									<x:dataTable id="results"
 										styleClass="table table-hover table-nomargin dataTable table-bordered responsive"
 										var="item"
-										value="#{AdministrationForm.administrationPlugin.finishedProcesses}">
+										value="#{AdministrationForm.administrationPlugin.resultListLimited(SessionForm.gsm.showMax)}">
 
 										<h:column>
 											<f:facet name="header">

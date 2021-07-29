@@ -47,13 +47,10 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
     private String title = "intranda_administration_reset_pagination";
 
     @Getter
-    private String value;
+    private int resultTotal = 0;
 
     @Getter
-    private int counter = 0;
-
-    @Getter
-    private List<Process> finishedProcesses;
+    private int resultProcessed = 0;
 
     @Getter
     @Setter
@@ -69,6 +66,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
         return "/uii/plugin_administration_reset_pagination.xhtml";
     }
 
+    private List<Process> processes = new ArrayList<Process>();
     private PushContext pusher;
 
     @Override
@@ -81,25 +79,28 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
      */
     public ResetPaginationAdministrationPlugin() {
         log.info("Sample admnistration plugin started");
-        value = ConfigPlugins.getPluginConfig(title).getString("value", "default value");
     }
 
     /**
      * action method to run through all processes matching the filter
      */
     public void resetPagination() {
-        finishedProcesses = new ArrayList<Process>();
 
         // filter the list of all processes that should be affected
         String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
-        List<Process> processes = ProcessManager.getProcesses("prozesse.titel", query);
+        List<Process> tempProcesses = ProcessManager.getProcesses("prozesse.titel", query);
 
+        resultTotal = tempProcesses.size();
+        resultProcessed = 0;
+        processes = new ArrayList<Process>();
+        
         Runnable run = () -> {
             try {
                 long lastPush = System.currentTimeMillis();
-                for (Process process : processes) {
+                for (Process process : tempProcesses) {
                     resetPaginationForProcess(process);
-                    finishedProcesses.add(process);
+                    processes.add(process);
+                    resultProcessed++;
                     if (pusher != null && System.currentTimeMillis() - lastPush > 2000) {
                         lastPush = System.currentTimeMillis();
                         pusher.send("update");
@@ -236,6 +237,20 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
             log.error(e);
         } catch (MetadataTypeNotAllowedException e) {
             log.error(e);
+        }
+    }
+    
+    /**
+     * Get a given maximum of processes 
+     * 
+     * @param inMax
+     * @return
+     */
+    public List<Process> resultListLimited(int inMax) {
+        if (inMax > processes.size()) {
+            return processes;
+        } else {
+            return processes.subList(0, inMax);
         }
     }
 }
