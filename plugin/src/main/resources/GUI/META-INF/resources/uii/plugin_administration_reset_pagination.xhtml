@@ -4,6 +4,7 @@
 	xmlns:h="http://xmlns.jcp.org/jsf/html"
 	xmlns:f="http://xmlns.jcp.org/jsf/core"
 	xmlns:x="http://myfaces.apache.org/tomahawk"
+    xmlns:o="http://omnifaces.org/ui"
 	xmlns:intranda="http://xmlns.jcp.org/jsf/composite/composites"
 	xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
 	xmlns:p="http://primefaces.org/ui">
@@ -49,6 +50,8 @@
 				</div>
 			</div>
 		</h:panelGroup>
-
+    <o:socket channel="adminPluginPush" scope="session">
+        <f:ajax event="update" render="actionform"/>
+    </o:socket>
 	</composite:implementation>
 </ui:composition>
