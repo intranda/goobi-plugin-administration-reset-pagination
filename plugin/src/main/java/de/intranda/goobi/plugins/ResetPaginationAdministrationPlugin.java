@@ -3,11 +3,15 @@ package de.intranda.goobi.plugins;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.prefs.Preferences;
 
+import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.Process;
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.flow.statistics.hibernate.FilterHelper;
@@ -16,9 +20,12 @@ import org.goobi.production.plugin.interfaces.IPushPlugin;
 import org.omnifaces.cdi.PushContext;
 
 import de.sub.goobi.config.ConfigPlugins;
+import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.Helper;
+import de.sub.goobi.helper.StorageProvider;
 import de.sub.goobi.helper.exceptions.DAOException;
 import de.sub.goobi.helper.exceptions.SwapException;
+import de.sub.goobi.metadaten.MetadatenImagesHelper;
 import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
 import lombok.Setter;
@@ -32,6 +39,7 @@ import ugh.dl.Fileformat;
 import ugh.dl.Metadata;
 import ugh.dl.MetadataType;
 import ugh.dl.Prefs;
+import ugh.dl.Reference;
 import ugh.exceptions.MetadataTypeNotAllowedException;
 import ugh.exceptions.PreferencesException;
 import ugh.exceptions.ReadException;
@@ -43,214 +51,236 @@ import ugh.exceptions.WriteException;
 @Log4j2
 public class ResetPaginationAdministrationPlugin implements IAdministrationPlugin, IPushPlugin {
 
-    @Getter
-    private String title = "intranda_administration_reset_pagination";
+	@Getter
+	private String title = "intranda_administration_reset_pagination";
 
-    @Getter
-    private int resultTotal = 0;
+	@Getter
+	private int resultTotal = 0;
 
-    @Getter
-    private int resultProcessed = 0;
+	@Getter
+	private int resultProcessed = 0;
 
-    @Getter
-    @Setter
-    private String filter;
+	@Getter
+	@Setter
+	private String filter;
 
-    @Override
-    public PluginType getType() {
-        return PluginType.Administration;
-    }
+	@Override
+	public PluginType getType() {
+		return PluginType.Administration;
+	}
 
-    @Override
-    public String getGui() {
-        return "/uii/plugin_administration_reset_pagination.xhtml";
-    }
+	@Override
+	public String getGui() {
+		return "/uii/plugin_administration_reset_pagination.xhtml";
+	}
 
-    private List<Process> processes = new ArrayList<Process>();
-    private PushContext pusher;
+	private List<Process> processes = new ArrayList<Process>();
+	private PushContext pusher;
 
-    @Override
-    public void setPushContext(PushContext pusher) {
-        this.pusher = pusher;
-    }
+	@Override
+	public void setPushContext(PushContext pusher) {
+		this.pusher = pusher;
+	}
 
-    /**
-     * Constructor
-     */
-    public ResetPaginationAdministrationPlugin() {
-        log.info("Sample admnistration plugin started");
-    }
+	/**
+	 * Constructor
+	 */
+	public ResetPaginationAdministrationPlugin() {
+		log.info("Sample admnistration plugin started");
+	}
 
-    /**
-     * action method to run through all processes matching the filter
-     */
-    public void resetPagination() {
+	/**
+	 * action method to run through all processes matching the filter
+	 */
+	public void resetPagination() {
 
-        // filter the list of all processes that should be affected
-        String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
-        List<Process> tempProcesses = ProcessManager.getProcesses("prozesse.titel", query);
+		// filter the list of all processes that should be affected
+		String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
+		List<Process> tempProcesses = ProcessManager.getProcesses("prozesse.titel", query);
 
-        resultTotal = tempProcesses.size();
-        resultProcessed = 0;
-        processes = new ArrayList<Process>();
-        
-        Runnable run = () -> {
-            try {
-                long lastPush = System.currentTimeMillis();
-                for (Process process : tempProcesses) {
-                    resetPaginationForProcess(process);
-                    processes.add(process);
-                    resultProcessed++;
-                    if (pusher != null && System.currentTimeMillis() - lastPush > 2000) {
-                        lastPush = System.currentTimeMillis();
-                        pusher.send("update");
-                    }
-                }
+		resultTotal = tempProcesses.size();
+		resultProcessed = 0;
+		processes = new ArrayList<Process>();
 
-                Thread.sleep(200);
-                if (pusher != null) {
-                    pusher.send("update");
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        };
-        new Thread(run).start();
-    }
+		Runnable run = () -> {
+			try {
+				long lastPush = System.currentTimeMillis();
+				for (Process process : tempProcesses) {
+					resetPaginationForProcess(process);
+					processes.add(process);
+					resultProcessed++;
+					if (pusher != null && System.currentTimeMillis() - lastPush > 2000) {
+						lastPush = System.currentTimeMillis();
+						pusher.send("update");
+					}
+				}
 
-    private Prefs prefs;
-    private Process process;
+				Thread.sleep(200);
+				if (pusher != null) {
+					pusher.send("update");
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		};
+		new Thread(run).start();
+	}
 
-    public boolean resetPaginationForProcess(Process inProcess) {
-        process = inProcess;
-        prefs = process.getRegelsatz().getPreferences();
-        Fileformat ff = null;
-        try {
-            ff = process.readMetadataFile();
-        } catch (ReadException | PreferencesException | SwapException | DAOException | WriteException | IOException
-                | InterruptedException e) {
-            log.error(e);
-            Helper.setFehlerMeldung(e);
-            return false;
-        }
+	/**
+	 * Reset the pagination for a given process (magic copied over from the
+	 * METS-Editor)
+	 * 
+	 * @param inProcess
+	 * @return
+	 */
+	public boolean resetPaginationForProcess(Process inProcess) {
+		Prefs prefs = inProcess.getRegelsatz().getPreferences();
+		Fileformat ff = null;
+		try {
+			ff = inProcess.readMetadataFile();
+		} catch (ReadException | PreferencesException | SwapException | DAOException | WriteException | IOException
+				| InterruptedException e) {
+			log.error(e);
+			Helper.setFehlerMeldung(e);
+			return false;
+		}
 
-        try {
+		try {
+			DigitalDocument dd = ff.getDigitalDocument();
+			DocStruct rootElement = dd.getLogicalDocStruct();
+			DocStruct physical = dd.getPhysicalDocStruct();
+			if (physical != null && physical.getAllChildren() != null) {
+				List<DocStruct> pages = physical.getAllChildren();
+				for (DocStruct page : pages) {
+					dd.getFileSet().removeFile(page.getAllContentFiles().get(0));
 
-            DigitalDocument dd = ff.getDigitalDocument();
-            DocStruct rootElement = dd.getLogicalDocStruct();
-            DocStruct physicalElement = dd.getPhysicalDocStruct();
-            try {
-                createPagination(physicalElement, rootElement, dd);
-            } catch (Exception e) {
-                log.error(e);
-            }
-        } catch (PreferencesException e) {
-            log.error(e);
-            Helper.setFehlerMeldung(e);
-            return false;
-        }
+					List<Reference> refs = new ArrayList<>(page.getAllFromReferences());
+					for (ugh.dl.Reference ref : refs) {
+						ref.getSource().removeReferenceTo(page);
+					}
+					if (page.getAllChildren() != null) {
+						for (DocStruct area : page.getAllChildren()) {
+							List<Reference> arearefs = new ArrayList<>(area.getAllFromReferences());
+							for (ugh.dl.Reference ref : arearefs) {
+								ref.getSource().removeReferenceTo(area);
+							}
+						}
+					}
+				}
+			}
+			while (physical.getAllChildren() != null && !physical.getAllChildren().isEmpty()) {
+				physical.removeChild(physical.getAllChildren().get(0));
+			}
+			createPagination(inProcess, prefs, physical, rootElement, dd);
+		} catch (Exception e) {
+			log.error(e);
+			Helper.setFehlerMeldung(e);
+			return false;
+		}
 
-        try {
-            process.writeMetadataFile(ff);
-        } catch (PreferencesException | SwapException | DAOException | WriteException | IOException
-                | InterruptedException e) {
-            Helper.setFehlerMeldung(e);
-            return false;
-        }
-        return true;
-    }
+		try {
+			inProcess.writeMetadataFile(ff);
+		} catch (PreferencesException | SwapException | DAOException | WriteException | IOException
+				| InterruptedException e) {
+			Helper.setFehlerMeldung(e);
+			return false;
+		}
+		return true;
+	}
 
-    public void createPagination(DocStruct physicaldocstruct, DocStruct logical, DigitalDocument dd) throws Exception {
-        MetadataType MDTypeForPath = prefs.getMetadataTypeByName("pathimagefiles");
+	/**
+	 * create a new pagination (magic copied over from the METS-Editor)
+	 * 
+	 * @param inProcess
+	 * @param prefs
+	 * @param physicaldocstruct
+	 * @param logical
+	 * @param dd
+	 * @throws Exception
+	 */
+	public void createPagination(Process inProcess, Prefs prefs, DocStruct physicaldocstruct, DocStruct logical,
+			DigitalDocument dd) throws Exception {
+		List<String> allTifFolders = new ArrayList<String>();
+		Path dir = Paths.get(inProcess.getImagesDirectory());
 
-        // create physical tree only if it does not exist already
-        if (physicaldocstruct == null) {
-            DocStructType dst = prefs.getDocStrctTypeByName("BoundBook");
-            physicaldocstruct = dd.createDocStruct(dst);
-            dd.setPhysicalDocStruct(physicaldocstruct);
-        }
+		List<String> verzeichnisse = StorageProvider.getInstance().listDirNames(dir.toString());
+		for (int i = 0; i < verzeichnisse.size(); i++) {
+			allTifFolders.add(verzeichnisse.get(i));
+		}
+		String currentTifFolder = allTifFolders.get(0);
 
-        // check for valid filepath
-        try {
-            List<? extends Metadata> filepath = physicaldocstruct.getAllMetadataByType(MDTypeForPath);
-            Metadata mdForPath;
-            if (filepath == null || filepath.isEmpty()) {
-                mdForPath = new Metadata(MDTypeForPath);
-                physicaldocstruct.addMetadata(mdForPath);
-            } else {
-                mdForPath = filepath.get(0);
-            }
-            mdForPath.setValue("file://" + process.getImagesTifDirectory(false));
-        } catch (Exception e) {
-            log.error(e);
-        }
+		Path thumbsDir = Paths.get(inProcess.getThumbsDirectory());
+		if (StorageProvider.getInstance().isDirectory(thumbsDir)) {
+			List<String> thumbDirs = StorageProvider.getInstance().listDirNames(thumbsDir.toString());
+			for (String thumbDirName : thumbDirs) {
+				String matchingImageDir = inProcess.getMatchingImageDir(thumbDirName);
+				if (!allTifFolders.contains(matchingImageDir)) {
+					allTifFolders.add(matchingImageDir);
+				}
+			}
+		}
 
-        // retrieve existing pages/images
-        File imagesDirectory = new File(process.getImagesTifDirectory(false));
-        if (imagesDirectory.isDirectory()) {
-            List<File> imageFiles = Arrays.asList(imagesDirectory.listFiles(new FilenameFilter() {
+		if (!ConfigurationHelper.getInstance().getProcessImagesFallbackDirectoryName().equals("")) {
+			String foldername = ConfigurationHelper.getInstance().getProcessImagesFallbackDirectoryName();
+			for (String directory : allTifFolders) {
+				if (directory.equals(foldername)) {
+					currentTifFolder = directory;
+					break;
+				}
+			}
+		}
 
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.toLowerCase().endsWith("tif") || name.toLowerCase().endsWith("tiff")
-                            || name.toLowerCase().endsWith("jpg") || name.toLowerCase().endsWith("jpeg")
-                            || name.toLowerCase().endsWith("jp2") || name.toLowerCase().endsWith("png");
-                }
-            }));
+		if (StringUtils.isBlank(currentTifFolder) && !allTifFolders.isEmpty()) {
+			currentTifFolder = Paths.get(inProcess.getImagesTifDirectory(true)).getFileName().toString();
+			if (!allTifFolders.contains(currentTifFolder)) {
+				currentTifFolder = allTifFolders.get(0);
+			}
+		}
 
-            Collections.sort(imageFiles);
+		MetadatenImagesHelper imagehelper = new MetadatenImagesHelper(prefs, dd);
+		imagehelper.createPagination(inProcess, currentTifFolder);
 
-            int pageNo = 0;
-            for (File file : imageFiles) {
-                pageNo++;
-                addPage(physicaldocstruct, logical, dd, file, pageNo);
-            }
-        }
+		// added new
+		if (ConfigurationHelper.getInstance().isMetsEditorEnableImageAssignment()) {
+			if (logical.getType().isAnchor()) {
+				if (logical.getAllChildren() != null && logical.getAllChildren().size() > 0) {
+					logical = logical.getAllChildren().get(0);
+				} else {
+					return;
+				}
+			}
 
-    }
+			if (logical.getAllChildren() != null) {
+				for (DocStruct child : logical.getAllChildren()) {
+					List<Reference> childRefs = child.getAllReferences("to");
+					for (Reference toAdd : childRefs) {
+						boolean match = false;
+						for (Reference ref : logical.getAllReferences("to")) {
+							if (ref.getTarget().equals(toAdd.getTarget())) {
+								match = true;
+								break;
+							}
+						}
+						if (!match) {
+							logical.getAllReferences("to").add(toAdd);
+						}
+					}
+				}
+			}
+		}
+	}
 
-    private void addPage(DocStruct physicaldocstruct, DocStruct logical, DigitalDocument dd, File imageFile, int pageNo)
-            throws TypeNotAllowedForParentException, IOException, InterruptedException, SwapException, DAOException {
-        DocStructType newPage = prefs.getDocStrctTypeByName("page");
-        DocStruct dsPage = dd.createDocStruct(newPage);
-        try {
-            // physical page no
-            physicaldocstruct.addChild(dsPage);
-            MetadataType mdt = prefs.getMetadataTypeByName("physPageNumber");
-            Metadata mdTemp = new Metadata(mdt);
-            mdTemp.setValue(String.valueOf(pageNo));
-            dsPage.addMetadata(mdTemp);
-
-            // logical page no
-            mdt = prefs.getMetadataTypeByName("logicalPageNumber");
-            mdTemp = new Metadata(mdt);
-            mdTemp.setValue("uncounted");
-            dsPage.addMetadata(mdTemp);
-            logical.addReferenceTo(dsPage, "logical_physical");
-
-            // image name
-            ContentFile cf = new ContentFile();
-            cf.setLocation("file://" + imageFile.getAbsolutePath());
-            dsPage.addContentFile(cf);
-
-        } catch (TypeNotAllowedAsChildException e) {
-            log.error(e);
-        } catch (MetadataTypeNotAllowedException e) {
-            log.error(e);
-        }
-    }
-    
-    /**
-     * Get a given maximum of processes 
-     * 
-     * @param inMax
-     * @return
-     */
-    public List<Process> resultListLimited(int inMax) {
-        if (inMax > processes.size()) {
-            return processes;
-        } else {
-            return processes.subList(0, inMax);
-        }
-    }
+	/**
+	 * Get a given maximum of processes
+	 * 
+	 * @param inMax
+	 * @return
+	 */
+	public List<Process> resultListLimited(int inMax) {
+		if (inMax > processes.size()) {
+			return processes;
+		} else {
+			return processes.subList(0, inMax);
+		}
+	}
 }
