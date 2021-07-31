@@ -14,6 +14,23 @@
 
 	<composite:implementation>
 
+		<style>
+			.progress {
+				border: 1px solid #428bca;
+				padding-left:0;
+				padding-right:0;
+			}
+			.progress-bar {
+				height: 100%;
+				background-color: #428bca;
+				margin-top: 0px;
+				line-height: 1.4;
+			}
+			.dataTables_wrapper .dataTables_length {
+			    line-height: 20px;
+			}
+		</style>
+
 		<div class="row">
 			<div class="col-sm-12">
 				<div class="box box-color box-bordered orange">
@@ -72,9 +89,9 @@
 						<div class="box box-color lightgrey box-bordered">
 							<div class="box-title">
 								<h3>
-									<i class="fa fa-pie-chart"></i>
+									<i class="fa fa-table"></i>
 									<h:outputText
-										value="#{msgs[AdministrationForm.administrationPlugin.title]}" />
+										value="#{msgs.ergebnisse}" />
 								</h3>
 							</div>
 							<div class="box-content nopadding">
@@ -82,79 +99,107 @@
 								<!-- ###################### result table ###################### -->
 
 								<div class="dataTables_wrapper">
-
 									<div class="dataTables_length"
-										style="width: 100%; margin-bottom: 10px;">
-										<h:outputText
-											value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.resultProcessed} / #{AdministrationForm.administrationPlugin.resultTotal}" />
-										<h:outputText
-											value=" - #{msgs.goobiScript_showMax}: #{SessionForm.gsm.showMax}"
-											styleClass="font-light margin-left-10"
-											rendered="#{AdministrationForm.administrationPlugin.resultProcessed gt SessionForm.gsm.showMax}" />
+										style="width: 100%;margin-top:20px;">
+										<div class="row">
+											<!-- number of hits -->
+											<div class="col-sm-2">
+												<h:outputText
+													styleClass="margin-right-5"
+													value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.resultProcessed} / #{AdministrationForm.administrationPlugin.resultTotal}" />
+												<h:outputFormat value="(#{msgs['maxHitsShown']})"
+													styleClass="font-light block"
+													rendered="#{AdministrationForm.administrationPlugin.resultProcessed gt SessionForm.gsm.showMax}">
+												   <f:param value="#{SessionForm.gsm.showMax}" />
+												</h:outputFormat>
+											</div>
+											<!-- // number of hits -->
 
-										<div class="btn-group font-size-s pull-right margin-right-10"
-											data-toggle="tooltip" title="#{msgs.goobiScript_limitList}"
-											style="margin-right: 20px;">
-											<button class="btn font-size-s dropdown-toggle"
-												data-toggle="dropdown" tabindex="0">
-												<i class="fa fa-table margin-right-5" /> <span
-													class="caret"></span>
-											</button>
-
-											<ul class="dropdown-menu">
-												<li>
-													<button class="dropdown-item"
-														jsf:action="#{NavigationForm.Reload}"
-														jsf:id="limitResults10">
-														<h:outputText value="#{msgs.goobiScript_setMaxEntries} 10" />
-														<x:updateActionListener
-															property="#{SessionForm.gsm.showMax}" value="10" />
-													</button>
-												</li>
-												<li>
-													<button class="dropdown-item"
-														jsf:action="#{NavigationForm.Reload}"
-														jsf:id="limitResults100">
-														<h:outputText
-															value="#{msgs.goobiScript_setMaxEntries} 100" />
-														<x:updateActionListener
-															property="#{SessionForm.gsm.showMax}" value="100" />
-													</button>
-												</li>
-												<li>
-													<button class="dropdown-item"
-														jsf:action="#{NavigationForm.Reload}"
-														jsf:id="limitResults1000">
-														<h:outputText
-															value="#{msgs.goobiScript_setMaxEntries} 1.000" />
-														<x:updateActionListener
-															property="#{SessionForm.gsm.showMax}" value="1000" />
-													</button>
-												</li>
-												<li>
-													<button class="dropdown-item"
-														jsf:action="#{NavigationForm.Reload}"
-														jsf:id="limitResults10000">
-														<h:outputText
-															value="#{msgs.goobiScript_setMaxEntries} 10.000" />
-														<x:updateActionListener
-															property="#{SessionForm.gsm.showMax}" value="10000" />
-													</button>
-												</li>
-												<li>
-													<button class="dropdown-item"
-														jsf:action="#{NavigationForm.Reload}"
-														jsf:id="limitResults1000000">
-														<h:outputText
-															value="#{msgs.goobiScript_setMaxEntries} 1.000.000" />
-														<x:updateActionListener
-															property="#{SessionForm.gsm.showMax}" value="1000000" />
-													</button>
-												</li>
-											</ul>
-
+											<!-- progress bar -->
+											<div class="col-sm-8 progress">
+												<div class="progress-bar #{AdministrationForm.administrationPlugin.progress lt 100 ? 'progress-bar-striped active' : ''}" role="progressbar"
+													aria-valuenow="#{AdministrationForm.administrationPlugin.progress}"
+													aria-valuemin="0" aria-valuemax="100"
+													style="width:#{AdministrationForm.administrationPlugin.progress}%">
+													<h:outputText
+														value="#{AdministrationForm.administrationPlugin.progress}%" />
+												</div>
+											</div>
+											<!-- // progress bar -->
+											
+											<!-- limit number of displayed hits -->
+											<div class="col-sm-2">
+											
+												<h:form id="limitForm">
+												
+													<div
+														class="btn-group font-size-s pull-right margin-right-10"
+														data-toggle="tooltip" title="#{msgs.goobiScript_limitList}"
+														style="margin-right: 20px;">
+														<button class="btn font-size-s dropdown-toggle"
+															data-toggle="dropdown" tabindex="0">
+															<i class="fa fa-table margin-right-5" /> <span
+																class="caret"></span>
+														</button>
+	
+														<ul class="dropdown-menu">
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{NavigationForm.Reload}"
+																	jsf:id="limitResults10">
+																	<h:outputText
+																		value="#{msgs.goobiScript_setMaxEntries} 10" />
+																	<x:updateActionListener
+																		property="#{SessionForm.gsm.showMax}" value="10" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{NavigationForm.Reload}"
+																	jsf:id="limitResults100">
+																	<h:outputText
+																		value="#{msgs.goobiScript_setMaxEntries} 100" />
+																	<x:updateActionListener
+																		property="#{SessionForm.gsm.showMax}" value="100" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{NavigationForm.Reload}"
+																	jsf:id="limitResults1000">
+																	<h:outputText
+																		value="#{msgs.goobiScript_setMaxEntries} 1.000" />
+																	<x:updateActionListener
+																		property="#{SessionForm.gsm.showMax}" value="1000" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{NavigationForm.Reload}"
+																	jsf:id="limitResults10000">
+																	<h:outputText
+																		value="#{msgs.goobiScript_setMaxEntries} 10.000" />
+																	<x:updateActionListener
+																		property="#{SessionForm.gsm.showMax}" value="10000" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{NavigationForm.Reload}"
+																	jsf:id="limitResults1000000">
+																	<h:outputText
+																		value="#{msgs.goobiScript_setMaxEntries} 1.000.000" />
+																	<x:updateActionListener
+																		property="#{SessionForm.gsm.showMax}" value="1000000" />
+																</button>
+															</li>
+														</ul>
+													</div>
+												</h:form>
+											</div>
+											<!-- limit number of displayed hits -->
+											
 										</div>
-
 									</div>
 
 									<!-- Datentabelle -->
@@ -168,6 +213,16 @@
 												<h:outputText value="#{msgs.title}" />
 											</f:facet>
 											<h:outputText value="#{item.titel}" />
+										</h:column>
+										
+										<h:column>
+											<f:facet name="header">
+												<h:outputText value="#{msgs.status}" />
+											</f:facet>
+											<h:outputText value="OK" title="OK" styleClass="badge font-size-xs badge-intranda-green" />
+											<!-- 
+											<h:outputText value="#{item.status}" title="#{item.statusmessage}" styleClass="badge font-size-xs #{item.status == 'OK' ? 'badge-intranda-green' : file.status == 'UNKNOWN'?'badge-intranda-orange':'badge-intranda-red'}" />
+											 -->
 										</h:column>
 
 									</x:dataTable>
@@ -187,6 +242,6 @@
 		<o:socket channel="adminPluginPush" scope="session">
 			<f:ajax event="update" render="resultArea" />
 		</o:socket>
-		
+
 	</composite:implementation>
 </ui:composition>

@@ -1,15 +1,10 @@
 package de.intranda.goobi.plugins;
 
-import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.prefs.Preferences;
 
 import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.Process;
@@ -31,20 +26,13 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import ugh.dl.ContentFile;
 import ugh.dl.DigitalDocument;
 import ugh.dl.DocStruct;
-import ugh.dl.DocStructType;
 import ugh.dl.Fileformat;
-import ugh.dl.Metadata;
-import ugh.dl.MetadataType;
 import ugh.dl.Prefs;
 import ugh.dl.Reference;
-import ugh.exceptions.MetadataTypeNotAllowedException;
 import ugh.exceptions.PreferencesException;
 import ugh.exceptions.ReadException;
-import ugh.exceptions.TypeNotAllowedAsChildException;
-import ugh.exceptions.TypeNotAllowedForParentException;
 import ugh.exceptions.WriteException;
 
 @PluginImplementation
@@ -80,13 +68,15 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Override
 	public void setPushContext(PushContext pusher) {
 		this.pusher = pusher;
+		filter = ConfigPlugins.getPluginConfig(title).getString("filter", "");
 	}
-
+	
 	/**
 	 * Constructor
 	 */
 	public ResetPaginationAdministrationPlugin() {
 		log.info("Sample admnistration plugin started");
+		
 	}
 
 	/**
@@ -106,10 +96,11 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 			try {
 				long lastPush = System.currentTimeMillis();
 				for (Process process : tempProcesses) {
+					Thread.sleep(800);
 					resetPaginationForProcess(process);
 					processes.add(process);
 					resultProcessed++;
-					if (pusher != null && System.currentTimeMillis() - lastPush > 2000) {
+					if (pusher != null && System.currentTimeMillis() - lastPush > 500) {
 						lastPush = System.currentTimeMillis();
 						pusher.send("update");
 					}
@@ -282,5 +273,13 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		} else {
 			return processes.subList(0, inMax);
 		}
+	}
+	
+	/**
+	 * get the progress in percent to render a progress bar
+	 * @return progress as percentage
+	 */
+	public int getProgress() {
+		return 100 * resultProcessed / resultTotal;	
 	}
 }
