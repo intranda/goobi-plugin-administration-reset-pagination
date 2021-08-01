@@ -52,37 +52,21 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Setter
 	private String filter;
 
-	@Override
-	public PluginType getType() {
-		return PluginType.Administration;
-	}
-
-	@Override
-	public String getGui() {
-		return "/uii/plugin_administration_reset_pagination.xhtml";
-	}
-
 	private List<Process> processes = new ArrayList<Process>();
 	private PushContext pusher;
-
-	@Override
-	public void setPushContext(PushContext pusher) {
-		this.pusher = pusher;
-		filter = ConfigPlugins.getPluginConfig(title).getString("filter", "");
-	}
 	
 	/**
 	 * Constructor
 	 */
 	public ResetPaginationAdministrationPlugin() {
-		log.info("Sample admnistration plugin started");
-		
+		log.info("Reset pagination admnistration plugin started");
+		filter = ConfigPlugins.getPluginConfig(title).getString("filter", "");		
 	}
 
 	/**
 	 * action method to run through all processes matching the filter
 	 */
-	public void resetPagination() {
+	public void execute() {
 
 		// filter the list of all processes that should be affected
 		String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
@@ -96,7 +80,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 			try {
 				long lastPush = System.currentTimeMillis();
 				for (Process process : tempProcesses) {
-					Thread.sleep(800);
+					//Thread.sleep(800);
 					resetPaginationForProcess(process);
 					processes.add(process);
 					resultProcessed++;
@@ -260,7 +244,22 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 			}
 		}
 	}
+	
+	@Override
+	public PluginType getType() {
+		return PluginType.Administration;
+	}
+	
+	@Override
+	public String getGui() {
+		return "/uii/plugin_administration_reset_pagination.xhtml";
+	}
 
+	@Override
+	public void setPushContext(PushContext pusher) {
+		this.pusher = pusher;
+	}
+	
 	/**
 	 * Get a given maximum of processes
 	 * 
@@ -282,4 +281,5 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	public int getProgress() {
 		return 100 * resultProcessed / resultTotal;	
 	}
+
 }
