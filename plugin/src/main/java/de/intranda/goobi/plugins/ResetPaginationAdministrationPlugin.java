@@ -1,6 +1,5 @@
 package de.intranda.goobi.plugins;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -8,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.goobi.beans.Process;
+import org.goobi.managedbeans.ProcessBean;
 import org.goobi.production.enums.PluginType;
 import org.goobi.production.flow.statistics.hibernate.FilterHelper;
 import org.goobi.production.plugin.interfaces.IAdministrationPlugin;
@@ -18,8 +18,6 @@ import de.sub.goobi.config.ConfigPlugins;
 import de.sub.goobi.config.ConfigurationHelper;
 import de.sub.goobi.helper.Helper;
 import de.sub.goobi.helper.StorageProvider;
-import de.sub.goobi.helper.exceptions.DAOException;
-import de.sub.goobi.helper.exceptions.SwapException;
 import de.sub.goobi.metadaten.MetadatenImagesHelper;
 import de.sub.goobi.persistence.managers.ProcessManager;
 import lombok.Getter;
@@ -31,9 +29,6 @@ import ugh.dl.DocStruct;
 import ugh.dl.Fileformat;
 import ugh.dl.Prefs;
 import ugh.dl.Reference;
-import ugh.exceptions.PreferencesException;
-import ugh.exceptions.ReadException;
-import ugh.exceptions.WriteException;
 
 @PluginImplementation
 @Log4j2
@@ -230,6 +225,25 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 			}
 		}
 	}
+	
+	/**
+	 * show the result inside of the process list
+	 * 
+	 * @return
+	 */
+	public String showInProcessList(String limit) {
+        String search = "\"id:";
+        for (ResetPaginationResult r : results) {
+        	if (limit.isEmpty() || limit.equals(r.getStatus())) {
+        		search += r.getProcess().getId() + " ";
+        	}
+        }
+        search += "\"";
+        ProcessBean processBean = Helper.getBeanByClass(ProcessBean.class);
+        processBean.setFilter( search);
+        processBean.setModusAnzeige("aktuell");
+        return processBean.FilterAlleStart();
+    }
 	
 	@Override
 	public PluginType getType() {

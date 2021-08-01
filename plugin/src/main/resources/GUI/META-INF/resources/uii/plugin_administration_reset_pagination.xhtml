@@ -30,6 +30,12 @@
 			.dataTables_wrapper .dataTables_length {
 			    line-height: 20px;
 			}
+			.resultNumber {
+				margin-left:20px;
+			}
+			.resultNumberMax {
+			    margin-left: 50px;
+			}
 		</style>
 
 		<!-- filter area -->
@@ -99,23 +105,67 @@
 						<div class="box-content nopadding">
 							<h:form id="resultForm">
 								<div class="dataTables_wrapper">
-	
+
 									<!-- summary above the result table -->
 									<div class="dataTables_length"
 										style="width: 100%;margin-top:20px;">
 										<div class="row">
-											<!-- number of hits -->
 											<div class="col-sm-2">
+											
+												<!-- Open process list -->
+												<div class="col-sm-2">
+													
+													<span
+														class="btn-group font-size-s margin-right-5"
+														data-toggle="tooltip" title="#{msgs.process_generateFilterQueryForHits}"
+														style="margin-left: -15px;">
+														<button class="btn font-size-s dropdown-toggle"
+															data-toggle="dropdown" tabindex="0">
+															<i class="fa fa-filter" /> <span
+																class="caret"></span>
+														</button>
+		
+														<ul class="dropdown-menu">
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{AdministrationForm.administrationPlugin.showInProcessList('ERROR')}"
+																	jsf:id="generateFilterError">
+																	<h:outputText
+																		value="#{msgs.process_filter_statusError}" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{AdministrationForm.administrationPlugin.showInProcessList('OK')}"
+																	jsf:id="generateFilterOk">
+																	<h:outputText
+																		value="#{msgs.process_filter_statusOk}" />
+																</button>
+															</li>
+															<li>
+																<button class="dropdown-item"
+																	jsf:action="#{AdministrationForm.administrationPlugin.showInProcessList('')}"
+																	jsf:id="generateFilterAll">
+																	<h:outputText
+																		value="#{msgs.process_filter_statusAll}" />
+																</button>
+															</li>
+														</ul>
+													</span>
+												</div>
+												<!-- // Open process list -->
+																						
+												<!-- number of hits -->
 												<h:outputText
-													styleClass="margin-right-5"
+													styleClass="resultNumber margin-right-5" 
 													value="#{msgs.treffer}: #{AdministrationForm.administrationPlugin.resultProcessed} / #{AdministrationForm.administrationPlugin.resultTotal}" />
 												<h:outputFormat value="(#{msgs['maxHitsShown']})"
-													styleClass="font-light block"
+													styleClass="resultNumberMax font-light block"
 													rendered="#{AdministrationForm.administrationPlugin.resultProcessed gt SessionForm.gsm.showMax}">
 												   <f:param value="#{SessionForm.gsm.showMax}" />
 												</h:outputFormat>
+												<!-- // number of hits -->
 											</div>
-											<!-- // number of hits -->
 	
 											<!-- progress bar -->
 											<div class="col-sm-8 progress">
@@ -131,7 +181,6 @@
 											
 											<!-- limit number of displayed hits -->
 											<div class="col-sm-2">
-										
 												<div
 													class="btn-group font-size-s pull-right margin-right-10"
 													data-toggle="tooltip" title="#{msgs.goobiScript_limitList}"
@@ -219,9 +268,9 @@
 											<f:facet name="header">
 												<h:outputText value="#{msgs.status}" />
 											</f:facet>
-											<h:outputText value="#{item.status}" title="#{item.message}" styleClass="badge font-size-xs #{item.status == 'OK' ? 'badge-intranda-green' : file.status == 'ERROR'?'badge-intranda-red':'badge-intranda-orange'}" />
+											<h:outputText value="#{msgs['goobiScript_status_'.concat(item.status)]}" title="#{item.message}" styleClass="badge font-size-xs #{item.status == 'OK' ? 'badge-intranda-green' : item.status == 'ERROR'?'badge-intranda-red':'badge-intranda-orange'}" />
 										</h:column>
-										
+
 										<h:column>
 											<f:facet name="header">
 												<h:outputText value="#{msgs.details}" />
@@ -281,9 +330,10 @@
 	                                                target="#{NavigationForm.uiStatus.mets_toc5}" />
 	                                        </h:commandLink>
 										</h:column>
+
 									</x:dataTable>
 									<!-- // result table -->
-	
+
 								</div>
 							</h:form>
 						</div>
