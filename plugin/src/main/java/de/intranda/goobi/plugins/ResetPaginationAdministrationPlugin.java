@@ -52,7 +52,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Setter
 	private String filter;
 
-	private List<Process> processes = new ArrayList<Process>();
+	private List<ResetPaginationResult> results = new ArrayList<ResetPaginationResult>();
 	private PushContext pusher;
 	
 	/**
@@ -74,15 +74,23 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 
 		resultTotal = tempProcesses.size();
 		resultProcessed = 0;
-		processes = new ArrayList<Process>();
+		results = new ArrayList<ResetPaginationResult>();
 
 		Runnable run = () -> {
 			try {
 				long lastPush = System.currentTimeMillis();
 				for (Process process : tempProcesses) {
 					//Thread.sleep(800);
-					resetPaginationForProcess(process);
-					processes.add(process);
+					ResetPaginationResult r = new ResetPaginationResult();
+					r.setProcess(process);
+					try {
+						resetPaginationForProcess(process);
+					} catch (Exception e) {
+						r.setStatus("ERROR");
+						r.setMessage(e.getMessage());
+						log.error("Error while executing the pagination reset", e);
+					}
+					results.add(r);
 					resultProcessed++;
 					if (pusher != null && System.currentTimeMillis() - lastPush > 500) {
 						lastPush = System.currentTimeMillis();
@@ -107,60 +115,38 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	 * 
 	 * @param inProcess
 	 * @return
+	 * @throws Exception 
 	 */
-	public boolean resetPaginationForProcess(Process inProcess) {
+	public void resetPaginationForProcess(Process inProcess) throws Exception {
 		Prefs prefs = inProcess.getRegelsatz().getPreferences();
-		Fileformat ff = null;
-		try {
-			ff = inProcess.readMetadataFile();
-		} catch (ReadException | PreferencesException | SwapException | DAOException | WriteException | IOException
-				| InterruptedException e) {
-			log.error(e);
-			Helper.setFehlerMeldung(e);
-			return false;
-		}
+		Fileformat ff = inProcess.readMetadataFile();
+		DigitalDocument dd = ff.getDigitalDocument();
+		DocStruct rootElement = dd.getLogicalDocStruct();
+		DocStruct physical = dd.getPhysicalDocStruct();
+		if (physical != null && physical.getAllChildren() != null) {
+			List<DocStruct> pages = physical.getAllChildren();
+			for (DocStruct page : pages) {
+				dd.getFileSet().removeFile(page.getAllContentFiles().get(0));
 
-		try {
-			DigitalDocument dd = ff.getDigitalDocument();
-			DocStruct rootElement = dd.getLogicalDocStruct();
-			DocStruct physical = dd.getPhysicalDocStruct();
-			if (physical != null && physical.getAllChildren() != null) {
-				List<DocStruct> pages = physical.getAllChildren();
-				for (DocStruct page : pages) {
-					dd.getFileSet().removeFile(page.getAllContentFiles().get(0));
-
-					List<Reference> refs = new ArrayList<>(page.getAllFromReferences());
-					for (ugh.dl.Reference ref : refs) {
-						ref.getSource().removeReferenceTo(page);
-					}
-					if (page.getAllChildren() != null) {
-						for (DocStruct area : page.getAllChildren()) {
-							List<Reference> arearefs = new ArrayList<>(area.getAllFromReferences());
-							for (ugh.dl.Reference ref : arearefs) {
-								ref.getSource().removeReferenceTo(area);
-							}
+				List<Reference> refs = new ArrayList<>(page.getAllFromReferences());
+				for (ugh.dl.Reference ref : refs) {
+					ref.getSource().removeReferenceTo(page);
+				}
+				if (page.getAllChildren() != null) {
+					for (DocStruct area : page.getAllChildren()) {
+						List<Reference> arearefs = new ArrayList<>(area.getAllFromReferences());
+						for (ugh.dl.Reference ref : arearefs) {
+							ref.getSource().removeReferenceTo(area);
 						}
 					}
 				}
 			}
-			while (physical.getAllChildren() != null && !physical.getAllChildren().isEmpty()) {
-				physical.removeChild(physical.getAllChildren().get(0));
-			}
-			createPagination(inProcess, prefs, physical, rootElement, dd);
-		} catch (Exception e) {
-			log.error(e);
-			Helper.setFehlerMeldung(e);
-			return false;
 		}
-
-		try {
-			inProcess.writeMetadataFile(ff);
-		} catch (PreferencesException | SwapException | DAOException | WriteException | IOException
-				| InterruptedException e) {
-			Helper.setFehlerMeldung(e);
-			return false;
+		while (physical.getAllChildren() != null && !physical.getAllChildren().isEmpty()) {
+			physical.removeChild(physical.getAllChildren().get(0));
 		}
-		return true;
+		createPagination(inProcess, prefs, physical, rootElement, dd);
+		inProcess.writeMetadataFile(ff);
 	}
 
 	/**
@@ -266,11 +252,11 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	 * @param inMax
 	 * @return
 	 */
-	public List<Process> resultListLimited(int inMax) {
-		if (inMax > processes.size()) {
-			return processes;
+	public List<ResetPaginationResult> resultListLimited(int inMax) {
+		if (inMax > results.size()) {
+			return results;
 		} else {
-			return processes.subList(0, inMax);
+			return results.subList(0, inMax);
 		}
 	}
 	
