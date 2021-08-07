@@ -37,6 +37,9 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Getter
 	private String title = "intranda_administration_reset_pagination";
 
+	@Getter @Setter
+	private int limit = 10;
+	
 	@Getter
 	private int resultTotal = 0;
 
@@ -50,6 +53,8 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Setter
 	private String filter;
 
+	@Getter
+	private List<ResetPaginationResult> resultsLimited = new ArrayList<ResetPaginationResult>();
 	private List<ResetPaginationResult> results = new ArrayList<ResetPaginationResult>();
 	private PushContext pusher;
 	
@@ -74,6 +79,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		resultTotal = tempProcesses.size();
 		resultProcessed = 0;
 		results = new ArrayList<ResetPaginationResult>();
+		resultsLimited = new ArrayList<ResetPaginationResult>();
 
 		Runnable runnable = () -> {
 			try {
@@ -94,6 +100,11 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 						log.error("Error while executing the pagination reset", e);
 					}
 					results.add(0, r);
+					if (results.size()>limit) {
+						resultsLimited = new ArrayList(results.subList(0, limit));											
+					} else {
+						resultsLimited = new ArrayList(results);		
+					}
 					resultProcessed++;
 					if (pusher != null && System.currentTimeMillis() - lastPush > 1000) {
 						lastPush = System.currentTimeMillis();
@@ -267,20 +278,6 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	@Override
 	public void setPushContext(PushContext pusher) {
 		this.pusher = pusher;
-	}
-	
-	/**
-	 * Get a given maximum of processes
-	 * 
-	 * @param inMax
-	 * @return
-	 */
-	public List<ResetPaginationResult> resultListLimited(int inMax) {
-		if (inMax > results.size()) {
-			return results;
-		} else {
-			return results.subList(0, inMax);
-		}
 	}
 	
 	/**
