@@ -84,7 +84,8 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 						break;
 					}
 					ResetPaginationResult r = new ResetPaginationResult();
-					r.setProcess(process);
+					r.setTitle(process.getTitel());
+					r.setId(process.getId());
 					try {
 						resetPaginationForProcess(process);
 					} catch (Exception e) {
@@ -243,7 +244,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
         String search = "\"id:";
         for (ResetPaginationResult r : results) {
         	if (limit.isEmpty() || limit.equals(r.getStatus())) {
-        		search += r.getProcess().getId() + " ";
+        		search += r.getId() + " ";
         	}
         }
         search += "\"";
