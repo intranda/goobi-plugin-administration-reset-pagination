@@ -42,6 +42,9 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 
 	@Getter
 	private int resultProcessed = 0;
+	
+	@Getter 
+	private boolean run = false;
 
 	@Getter
 	@Setter
@@ -62,7 +65,8 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 	 * action method to run through all processes matching the filter
 	 */
 	public void execute() {
-
+		run = true;
+		
 		// filter the list of all processes that should be affected
 		String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
 		List<Process> tempProcesses = ProcessManager.getProcesses("prozesse.titel", query);
@@ -71,11 +75,14 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		resultProcessed = 0;
 		results = new ArrayList<ResetPaginationResult>();
 
-		Runnable run = () -> {
+		Runnable runnable = () -> {
 			try {
 				long lastPush = System.currentTimeMillis();
 				for (Process process : tempProcesses) {
-					//Thread.sleep(800);
+					Thread.sleep(1000);
+					if (!run) {
+						break;
+					}
 					ResetPaginationResult r = new ResetPaginationResult();
 					r.setProcess(process);
 					try {
@@ -85,7 +92,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 						r.setMessage(e.getMessage());
 						log.error("Error while executing the pagination reset", e);
 					}
-					results.add(r);
+					results.add(0, r);
 					resultProcessed++;
 					if (pusher != null && System.currentTimeMillis() - lastPush > 1000) {
 						lastPush = System.currentTimeMillis();
@@ -93,6 +100,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 					}
 				}
 
+				run = false;
 				Thread.sleep(200);
 				if (pusher != null) {
 					pusher.send("update");
@@ -101,7 +109,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 				e.printStackTrace();
 			}
 		};
-		new Thread(run).start();
+		new Thread(runnable).start();
 	}
 
 	/**
@@ -282,4 +290,10 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		return 100 * resultProcessed / resultTotal;	
 	}
 
+	/**
+	 * stop further processing 
+	 */
+	public void cancel() {
+		run = false;
+	}
 }
