@@ -87,7 +87,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 					}
 					results.add(r);
 					resultProcessed++;
-					if (pusher != null && System.currentTimeMillis() - lastPush > 500) {
+					if (pusher != null && System.currentTimeMillis() - lastPush > 1000) {
 						lastPush = System.currentTimeMillis();
 						pusher.send("update");
 					}
