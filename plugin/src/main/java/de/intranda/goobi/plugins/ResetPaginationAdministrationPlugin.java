@@ -74,7 +74,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		
 		// filter the list of all processes that should be affected
 		String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
-		List<Process> tempProcesses = ProcessManager.getProcesses("prozesse.titel", query);
+		List<Integer> tempProcesses = ProcessManager.getIDList( query);
 
 		resultTotal = tempProcesses.size();
 		resultProcessed = 0;
@@ -84,7 +84,8 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 		Runnable runnable = () -> {
 			try {
 				long lastPush = System.currentTimeMillis();
-				for (Process process : tempProcesses) {
+				for (Integer processId : tempProcesses) {
+                    Process process = ProcessManager.getProcessById(processId);
 					Thread.sleep(1000);
 					if (!run) {
 						break;
