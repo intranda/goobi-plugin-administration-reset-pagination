@@ -7,7 +7,7 @@
     <relativePath />
   </parent>
   <groupId>io.goobi.workflow.plugin</groupId>
-  <artifactId>plugin-administration-reset_pagination</artifactId>
+  <artifactId>plugin-administration-reset-pagination</artifactId>
   <packaging>pom</packaging>
   <modules>
     <module>module-base</module>
