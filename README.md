@@ -15,8 +15,8 @@ Detail                      | Description
 **Plugin identifier**       | intranda_administration_reset_pagination
 **Plugin type**             | administration
 **Licence**                 | GPL 2.0 or newer
-**Documentation (German)**  | https://docs.goobi.io/workflow-plugins/v/eng/administration/goobi-plugin-administration-reset-pagination
-**Documentation (English)** | https://docs.goobi.io/workflow-plugins/v/ger/administration/goobi-plugin-administration-reset-pagination
+**Documentation (German)**  | https://docs.goobi.io/workflow-plugins/v/ger/administration/goobi-plugin-administration-reset-pagination
+**Documentation (English)** | https://docs.goobi.io/workflow-plugins/v/eng/administration/goobi-plugin-administration-reset-pagination
 
 ## Goobi details
 
