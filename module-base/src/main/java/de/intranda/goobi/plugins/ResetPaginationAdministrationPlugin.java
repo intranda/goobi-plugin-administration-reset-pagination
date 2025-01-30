@@ -34,10 +34,13 @@ import ugh.dl.Reference;
 @Log4j2
 public class ResetPaginationAdministrationPlugin implements IAdministrationPlugin, IPushPlugin {
 
+    private static final long serialVersionUID = -2909331469974333390L;
+
     @Getter
     private String title = "intranda_administration_reset_pagination";
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private int limit = 10;
 
     @Getter
@@ -54,8 +57,8 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
     private String filter;
 
     @Getter
-    private List<ResetPaginationResult> resultsLimited = new ArrayList<>();
-    private List<ResetPaginationResult> results = new ArrayList<>();
+    private transient List<ResetPaginationResult> resultsLimited = new ArrayList<>();
+    private transient List<ResetPaginationResult> results = new ArrayList<>();
     private PushContext pusher;
 
     /**
@@ -74,7 +77,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 
         // filter the list of all processes that should be affected
         String query = FilterHelper.criteriaBuilder(filter, false, null, null, null, true, false);
-        List<Integer> tempProcesses = ProcessManager.getIdsForFilter( query);
+        List<Integer> tempProcesses = ProcessManager.getIdsForFilter(query);
 
         resultTotal = tempProcesses.size();
         resultProcessed = 0;
@@ -101,10 +104,10 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
                         log.error("Error while executing the pagination reset", e);
                     }
                     results.add(0, r);
-                    if (results.size()>limit) {
-                        resultsLimited = new ArrayList(results.subList(0, limit));
+                    if (results.size() > limit) {
+                        resultsLimited = new ArrayList<>(results.subList(0, limit));
                     } else {
-                        resultsLimited = new ArrayList(results);
+                        resultsLimited = new ArrayList<>(results);
                     }
                     resultProcessed++;
                     if (pusher != null && System.currentTimeMillis() - lastPush > 1000) {
@@ -126,8 +129,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
     }
 
     /**
-     * Reset the pagination for a given process (magic copied over from the
-     * METS-Editor)
+     * Reset the pagination for a given process (magic copied over from the METS-Editor)
      * 
      * @param inProcess
      * @return
@@ -197,7 +199,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
             }
         }
 
-        if (!ConfigurationHelper.getInstance().getProcessImagesFallbackDirectoryName().equals("")) {
+        if (!"".equals(ConfigurationHelper.getInstance().getProcessImagesFallbackDirectoryName())) {
             String foldername = ConfigurationHelper.getInstance().getProcessImagesFallbackDirectoryName();
             for (String directory : allTifFolders) {
                 if (directory.equals(foldername)) {
@@ -253,15 +255,15 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
      * @return
      */
     public String showInProcessList(String limit) {
-        String search = "\"id:";
+        StringBuilder search = new StringBuilder("\"id:");
         for (ResetPaginationResult r : results) {
             if (limit.isEmpty() || limit.equals(r.getStatus())) {
-                search += r.getId() + " ";
+                search.append(r.getId()).append(" ");
             }
         }
-        search += "\"";
+        search.append("\"");
         ProcessBean processBean = Helper.getBeanByClass(ProcessBean.class);
-        processBean.setFilter( search);
+        processBean.setFilter(search.toString());
         processBean.setModusAnzeige("aktuell");
         return processBean.FilterAlleStart();
     }
@@ -283,6 +285,7 @@ public class ResetPaginationAdministrationPlugin implements IAdministrationPlugi
 
     /**
      * get the progress in percent to render a progress bar
+     *
      * @return progress as percentage
      */
     public int getProgress() {
