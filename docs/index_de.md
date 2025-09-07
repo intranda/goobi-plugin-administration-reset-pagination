@@ -3,6 +3,10 @@ title: Paginierung zurücksetzen
 identifier: intranda_administration_reset_pagination
 description: Goobi Administration Plugin für das Zurücksetzen der Paginierung für mehrere Vorgänge
 published: true
+keywords:
+    - Plugin
+    - Administration
+    - Paginierung
 ---
 ## Einführung
 Die vorliegende Dokumentation beschreibt die Installation, die Konfiguration und den Einsatz des Administration Plugins für das automatisierte Zurücksetzen der Paginierung innerhalb einer großen Anzahl an Vorgängen innerhalb von Goobi workflow.
