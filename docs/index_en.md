@@ -4,6 +4,7 @@ identifier: intranda_administration_reset_pagination
 description: Goobi Administration Plugin for resetting pagination for multiple processes
 published: true
 keywords:
+    - Goobi workflow
     - Plugin
     - Administration Plugin
     - Pagination
