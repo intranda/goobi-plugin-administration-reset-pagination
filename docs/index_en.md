@@ -5,7 +5,7 @@ description: Goobi Administration Plugin for resetting pagination for multiple p
 published: true
 keywords:
     - Plugin
-    - Administration
+    - Administration Plugin
     - Pagination
 ---
 ## Introduction

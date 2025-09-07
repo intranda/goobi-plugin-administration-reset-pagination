@@ -5,7 +5,7 @@ description: Goobi Administration Plugin für das Zurücksetzen der Paginierung 
 published: true
 keywords:
     - Plugin
-    - Administration
+    - Administration Plugin
     - Paginierung
 ---
 ## Einführung
