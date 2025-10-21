@@ -7,7 +7,6 @@ keywords:
     - Goobi workflow
     - Plugin
     - Administration Plugin
-    - Paginierung
 ---
 ## Einführung
 Die vorliegende Dokumentation beschreibt die Installation, die Konfiguration und den Einsatz des Administration Plugins für das automatisierte Zurücksetzen der Paginierung innerhalb einer großen Anzahl an Vorgängen innerhalb von Goobi workflow.
