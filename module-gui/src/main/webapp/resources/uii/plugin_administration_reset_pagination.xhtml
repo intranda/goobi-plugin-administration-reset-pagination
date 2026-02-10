@@ -10,7 +10,8 @@
 	xmlns:jsf="http://xmlns.jcp.org/jsf"
 	xmlns:section="http://goobi.io/section"
 	xmlns:form="http://goobi.io/form"
-	xmlns:table="http://goobi.io/table">
+	xmlns:table="http://goobi.io/table"
+	xmlns:util="http://goobi.io/util">
 
 	<composite:interface>
 	</composite:interface>
@@ -107,7 +108,7 @@
 													class="btn btn-blank dropdown-toggle"
 													data-bs-toggle="dropdown"
 													aria-expanded="false">
-													<span class="fa fa-filter" />
+													<util:icon icon="filter" />
 												</button>
 
 												<ul class="dropdown-menu">
@@ -185,7 +186,7 @@
 												class="btn btn-blank dropdown-toggle"
 												data-bs-toggle="dropdown"
 												aria-expanded="false">
-												<span class="fa fa-table" aria-hidden="true" />
+												<util:icon icon="table" />
 											</button>
 											<ul class="dropdown-menu">
 												<li>
@@ -291,7 +292,7 @@
 											title="#{msgs.metadatenBearbeiten}"
 											pt:aria-label="#{msgs.metadatenBearbeiten}"
 											onclick="preventDoubleSubmit(this); sessionStorage.removeItem('columnWidths');">
-											<span class="fa fa-book" aria-hidden="true" />
+											<util:icon icon="book" />
 											<f:passThroughAttribute
 												name="data-bs-toggle"
 												value="tooltip" />
